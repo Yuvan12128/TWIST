@@ -14,6 +14,7 @@ import '../../widgets/twist_button.dart';
 import '../../widgets/glass_card.dart';
 import '../story_player/story_player_screen.dart';
 import '../ending/all_endings_screen.dart';
+import '../profile/profile_screen.dart';
 
 class StoryDetailScreen extends StatelessWidget {
   final StoryModel story;
@@ -150,40 +151,52 @@ class StoryDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      // Creator Info
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: story.creatorAvatar != null
-                                ? CachedImage(
-                                    imageUrl: story.creatorAvatar!,
-                                    width: 32,
-                                    height: 32,
-                                  )
-                                : Container(
-                                    width: 32,
-                                    height: 32,
-                                    color: AppColors.surfaceLight,
-                                    child: const Icon(Icons.person, color: AppColors.textMuted, size: 18),
-                                  ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            context.tr('created_by'),
-                            style: AppTypography.caption.copyWith(color: AppColors.textMuted),
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              story.creatorName,
-                              style: AppTypography.storyCardTitle.copyWith(fontSize: 13.5),
-                              overflow: TextOverflow.ellipsis,
+                      // Creator Info (Tappable to view creator profile)
+                      GestureDetector(
+                        onTap: () {
+                          if (story.creatorId.isNotEmpty) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProfileScreen(userId: story.creatorId),
+                              ),
+                            );
+                          }
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: story.creatorAvatar != null
+                                  ? CachedImage(
+                                      imageUrl: story.creatorAvatar!,
+                                      width: 32,
+                                      height: 32,
+                                    )
+                                  : Container(
+                                      width: 32,
+                                      height: 32,
+                                      color: AppColors.surfaceLight,
+                                      child: const Icon(Icons.person, color: AppColors.textMuted, size: 18),
+                                    ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.verified, size: 14, color: AppColors.primaryBlue),
-                        ],
+                            const SizedBox(width: 10),
+                            Text(
+                              context.tr('created_by'),
+                              style: AppTypography.caption.copyWith(color: AppColors.textMuted),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                story.creatorName,
+                                style: AppTypography.storyCardTitle.copyWith(fontSize: 13.5),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.verified, size: 14, color: AppColors.primaryBlue),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 20),
 
@@ -255,7 +268,7 @@ class StoryDetailScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 120), // Bottom space for fixed action bar
+                      const SizedBox(height: 160), // Bottom space for fixed action bar
                     ],
                   ),
                 ),
@@ -357,9 +370,19 @@ class StoryDetailScreen extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: iconColor),
         const SizedBox(height: 6),
-        Text(value, style: AppTypography.statNumber.copyWith(fontSize: 15)),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.statNumber.copyWith(fontSize: 15),
+        ),
         const SizedBox(height: 2),
-        Text(label, style: AppTypography.statLabel.copyWith(fontSize: 11)),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.statLabel.copyWith(fontSize: 11),
+        ),
       ],
     );
   }

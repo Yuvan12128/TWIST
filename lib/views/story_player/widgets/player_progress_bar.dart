@@ -25,31 +25,40 @@ class PlayerProgressBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryYellow.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.primaryYellow.withOpacity(0.3), width: 1),
-                  ),
-                  child: Text(
-                    '${context.tr('scene')} $currentScene',
-                    style: AppTypography.badgeText.copyWith(
-                      color: AppColors.primaryYellow,
-                      fontSize: 10,
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryYellow.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.primaryYellow.withOpacity(0.3), width: 1),
+                    ),
+                    child: Text(
+                      '${context.tr('scene')} $currentScene',
+                      style: AppTypography.badgeText.copyWith(
+                        color: AppColors.primaryYellow,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${context.tr('of_scenes')} $totalEstimatedScenes',
-                  style: AppTypography.caption.copyWith(color: AppColors.secondaryText, fontSize: 11),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '${context.tr('of_scenes')} $totalEstimatedScenes',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(color: AppColors.secondaryText, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.touch_app_outlined, size: 13, color: AppColors.primaryYellow),
                 const SizedBox(width: 4),

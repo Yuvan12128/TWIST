@@ -9,6 +9,7 @@ import '../../providers/story_feed_provider.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/glass_card.dart';
 import '../story_detail/story_detail_screen.dart';
+import '../profile/profile_screen.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -206,7 +207,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
                             return GlassCard(
                               onTap: () {
                                 activityProv.markAsRead(item.id);
-                                if (item.storyId != null) {
+                                if (item.type.toLowerCase() == 'follow' && item.actorId != null && item.actorId!.isNotEmpty) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ProfileScreen(userId: item.actorId),
+                                    ),
+                                  );
+                                } else if (item.storyId != null) {
                                   final stories = context.read<StoryFeedProvider>().stories;
                                   final match = stories.where((s) => s.id == item.storyId);
                                   if (match.isNotEmpty) {

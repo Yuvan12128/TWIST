@@ -12,7 +12,20 @@
           "package_name": "com.example.twist"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "149696555004-g2qnum51ultqfk98939p071smoofm2da.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.twist",
+            "certificate_hash": "9d28386dec46962e033eca783e038e5789a10eca"
+          }
+        },
+        {
+          "client_id": "149696555004-52hg1u8h1q63bb2l0r1775c20hu3vvmh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDlvceK68wZwGa3IXd-3XK1hpiujpQUWtU"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "149696555004-52hg1u8h1q63bb2l0r1775c20hu3vvmh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "149696555004-cmb8l86p3q3oua4d85pm1k6o62kkac1i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.twist"
+              }
+            }
+          ]
         }
       }
     }

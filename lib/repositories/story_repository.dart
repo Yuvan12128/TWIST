@@ -431,6 +431,93 @@ class StoryRepository {
     return newComment;
   }
 
+  void cacheStoryNodes(String storyId, Map<String, StoryNodeModel> nodes) {
+    _storyNodesMap[storyId] = Map.from(nodes);
+  }
+
+  void cacheStoryEndings(String storyId, List<StoryEndingModel> endings) {
+    final map = _storyEndingsMap.putIfAbsent(storyId, () => {});
+    for (final e in endings) {
+      map[e.id] = e;
+    }
+  }
+
+  Future<bool> publishStory({
+    required StoryModel story,
+    required List<StoryNodeModel> nodes,
+    required List<StoryEndingModel> endings,
+  }) async {
+    // 1. Immediately cache in memory for instantaneous local responsiveness
+    final nodeMap = {for (final n in nodes) n.nodeId: n};
+    _storyNodesMap[story.id] = nodeMap;
+
+    final endingMap = _storyEndingsMap.putIfAbsent(story.id, () => {});
+    for (final e in endings) {
+      endingMap[e.id] = e;
+    }
+
+    final existingIdx = _stories.indexWhere((s) => s.id == story.id);
+    if (existingIdx != -1) {
+      _stories[existingIdx] = story;
+    } else {
+      _stories.insert(0, story);
+    }
+
+    // 2. Persist to Firestore if online
+    if (FirebaseService.isFirebaseReady && FirebaseService.firestore != null) {
+      try {
+        final firestore = FirebaseService.firestore!;
+        final storyRef = firestore.collection('stories').doc(story.id);
+
+        final storyMap = {
+          'id': story.id,
+          'title': story.titleMap,
+          'description': story.descriptionMap,
+          'availableLanguages': story.availableLanguages,
+          'coverUrl': story.coverUrl,
+          'category': story.category,
+          'categories': story.categories.isNotEmpty ? story.categories : [story.category],
+          'creatorId': story.creatorId,
+          'creatorName': story.creatorName,
+          'creatorAvatar': story.creatorAvatar,
+          'duration': story.duration,
+          'plays': 0,
+          'likes': 0,
+          'commentsCount': 0,
+          'endingsCount': endings.length,
+          'startNodeId': story.startNodeId,
+          'isPublished': true,
+          'isDraft': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        // Step 1: Commit parent story doc first so isStoryCreator security check succeeds
+        await storyRef.set(storyMap);
+
+        // Step 2: Batch commit nodes subcollection and endings collection
+        final batch = firestore.batch();
+
+        for (final node in nodes) {
+          final nodeRef = storyRef.collection('nodes').doc(node.nodeId);
+          batch.set(nodeRef, node.toMap());
+        }
+
+        for (final ending in endings) {
+          final endingRef = firestore.collection('endings').doc(ending.id);
+          batch.set(endingRef, ending.toMap());
+        }
+
+        await batch.commit();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   void dispose() {
     for (final timer in _likeDebounceTimers.values) {
       timer.cancel();

@@ -22,7 +22,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       storageService = await StorageService.init();
       authRepository = AuthRepository(storageService);
-      storyRepository = StoryRepository(storageService);
+      storyRepository = StoryRepository(storageService, enableSampleFallback: true);
     });
 
     test('1. DefaultFirebaseOptions contains correct TWIST project credentials', () {
@@ -160,5 +160,12 @@ void main() {
       expect(preservedB.length, 1);
       expect(preservedB.first.id, 'act_user_b');
     });
+
+    test('7. AuthRepository in production returns null on startup without logged-in Firebase user', () async {
+      final unauthenticatedUser = await authRepository.initializeAuth();
+      expect(unauthenticatedUser, isNull);
+      expect(authRepository.currentUser, isNull);
+    });
   });
 }
+

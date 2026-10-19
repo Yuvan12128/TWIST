@@ -13,11 +13,14 @@ import 'core/localization/app_language.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/story_repository.dart';
 import 'repositories/activity_repository.dart';
+import 'repositories/social_repository.dart';
+import 'repositories/chat_repository.dart';
 import 'providers/auth_provider.dart';
 import 'providers/story_feed_provider.dart';
 import 'providers/story_player_provider.dart';
 import 'providers/profile_provider.dart';
 import 'providers/activity_provider.dart';
+import 'providers/chat_provider.dart';
 import 'views/splash/splash_screen.dart';
 
 void main() async {
@@ -46,6 +49,8 @@ void main() async {
   final authRepository = AuthRepository(storageService);
   final storyRepository = StoryRepository(storageService, enableSampleFallback: false);
   final activityRepository = ActivityRepository(storageService: storageService, enableSampleFallback: false);
+  final socialRepository = SocialRepository(storageService);
+  final chatRepository = ChatRepository();
 
   runApp(
     TwistApp(
@@ -54,6 +59,8 @@ void main() async {
       authRepository: authRepository,
       storyRepository: storyRepository,
       activityRepository: activityRepository,
+      socialRepository: socialRepository,
+      chatRepository: chatRepository,
     ),
   );
 
@@ -69,6 +76,8 @@ class TwistApp extends StatelessWidget {
   final AuthRepository authRepository;
   final StoryRepository storyRepository;
   final ActivityRepository activityRepository;
+  final SocialRepository socialRepository;
+  final ChatRepository chatRepository;
 
   const TwistApp({
     super.key,
@@ -77,6 +86,8 @@ class TwistApp extends StatelessWidget {
     required this.authRepository,
     required this.storyRepository,
     required this.activityRepository,
+    required this.socialRepository,
+    required this.chatRepository,
   });
 
   @override
@@ -88,6 +99,8 @@ class TwistApp extends StatelessWidget {
         Provider<AnalyticsService>.value(value: analyticsService),
         Provider<StoryRepository>.value(value: storyRepository),
         Provider<ActivityRepository>.value(value: activityRepository),
+        Provider<SocialRepository>.value(value: socialRepository),
+        Provider<ChatRepository>.value(value: chatRepository),
 
         // State Providers
         ChangeNotifierProvider<LanguageProvider>(
@@ -103,10 +116,17 @@ class TwistApp extends StatelessWidget {
           create: (_) => StoryPlayerProvider(storyRepository, analyticsService),
         ),
         ChangeNotifierProvider<ProfileProvider>(
-          create: (_) => ProfileProvider(storyRepository, storageService),
+          create: (_) => ProfileProvider(
+            storyRepository,
+            storageService,
+            socialRepository: socialRepository,
+          ),
         ),
         ChangeNotifierProvider<ActivityProvider>(
           create: (_) => ActivityProvider(activityRepository, storageService: storageService),
+        ),
+        ChangeNotifierProvider<ChatProvider>(
+          create: (_) => ChatProvider(chatRepository),
         ),
       ],
       child: Consumer<LanguageProvider>(

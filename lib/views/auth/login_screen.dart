@@ -120,6 +120,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           const Spacer(flex: 1),
 
+                          // Brand Logo Emblem
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
                           // Brand Header: Yellow TWIST + Tagline
                           Text(
                             AppStrings.appName,
@@ -326,109 +338,112 @@ class _EmailAuthBottomSheetState extends State<_EmailAuthBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _isSignUp ? context.tr('sign_up') : context.tr('sign_in'),
-                style: AppTypography.screenTitle.copyWith(fontSize: 20),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          if (_localError != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.accentRed.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.accentRed.withOpacity(0.4)),
-              ),
-              child: Text(
-                _localError!,
-                style: const TextStyle(color: AppColors.accentRed, fontSize: 13),
-              ),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _isSignUp ? context.tr('sign_up') : context.tr('sign_in'),
+                  style: AppTypography.screenTitle.copyWith(fontSize: 20),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-          ],
+            const SizedBox(height: 16),
 
-          if (_isSignUp) ...[
+            if (_localError != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.accentRed.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.accentRed.withOpacity(0.4)),
+                ),
+                child: Text(
+                  _localError!,
+                  style: const TextStyle(color: AppColors.accentRed, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+
+            if (_isSignUp) ...[
+              TextField(
+                controller: _nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: context.tr('storyteller_alias'),
+                  prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.textMuted),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+
             TextField(
-              controller: _nameController,
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: context.tr('storyteller_alias'),
-                prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.textMuted),
+                hintText: context.tr('email_address'),
+                prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
               ),
             ),
             const SizedBox(height: 14),
-          ],
 
-          TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: context.tr('email_address'),
-              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textMuted),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: context.tr('password'),
+                prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
+            const SizedBox(height: 20),
 
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: context.tr('password'),
-              prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
+            TwistButton(
+              text: _isSignUp ? context.tr('join_twist') : context.tr('sign_in'),
+              isLoading: _isLoading,
+              onPressed: _submit,
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
-          TwistButton(
-            text: _isSignUp ? context.tr('join_twist') : context.tr('sign_in'),
-            isLoading: _isLoading,
-            onPressed: _submit,
-          ),
-          const SizedBox(height: 14),
-
-          Center(
-            child: TextButton(
-              onPressed: () {
-                setState(() {
-                  _isSignUp = !_isSignUp;
-                  _localError = null;
-                });
-              },
-              child: Text(
-                _isSignUp
-                    ? context.tr('already_have_account')
-                    : context.tr('dont_have_account'),
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.primaryYellow,
-                  fontWeight: FontWeight.w600,
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isSignUp = !_isSignUp;
+                    _localError = null;
+                  });
+                },
+                child: Text(
+                  _isSignUp
+                      ? context.tr('already_have_account')
+                      : context.tr('dont_have_account'),
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.primaryYellow,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

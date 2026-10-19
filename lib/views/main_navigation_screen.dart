@@ -187,6 +187,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               const SizedBox(height: 3),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption.copyWith(
                   color: itemColor,
                   fontSize: 10.5,

@@ -28,6 +28,7 @@ class StoryPlayerProvider extends ChangeNotifier {
   StoryEndingModel? _currentEnding;
   PlayerStatus _status = PlayerStatus.idle;
   String? _errorMessage;
+  bool _isPreview = false;
 
   String _sessionId = '';
   final List<String> _visitedNodeIds = [];
@@ -44,6 +45,7 @@ class StoryPlayerProvider extends ChangeNotifier {
   bool get isLoading => _status == PlayerStatus.loading;
   bool get isTransitioning => _status == PlayerStatus.transitioning;
   bool get hasEnded => _status == PlayerStatus.ended;
+  bool get isPreview => _isPreview;
   String? get errorMessage => _errorMessage;
 
   List<StoryChoiceModel> get chosenChoices => List.unmodifiable(_chosenChoices);
@@ -60,8 +62,10 @@ class StoryPlayerProvider extends ChangeNotifier {
     required StoryModel story,
     required String userId,
     String? startNodeId,
+    bool isPreview = false,
   }) async {
     _story = story;
+    _isPreview = isPreview;
     _status = PlayerStatus.loading;
     _errorMessage = null;
     _visitedNodeIds.clear();
@@ -71,15 +75,17 @@ class StoryPlayerProvider extends ChangeNotifier {
     _sessionId = _uuid.v4();
     notifyListeners();
 
-    _analyticsService.logStoryStart(
-      storyId: story.id,
-      storyTitle: story.title,
-    );
+    if (!_isPreview) {
+      _analyticsService.logStoryStart(
+        storyId: story.id,
+        storyTitle: story.title,
+      );
+    }
 
     try {
       // Load all endings metadata for this story
       _allStoryEndings = await _storyRepository.getStoryEndings(story.id);
-      _unlockedEndingIds = _storyRepository.getUnlockedEndingIds(story.id);
+      _unlockedEndingIds = _isPreview ? {} : _storyRepository.getUnlockedEndingIds(story.id);
 
       final targetNodeId = startNodeId ?? story.startNodeId;
       final node = await _storyRepository.getStoryNode(story.id, targetNodeId);
@@ -112,28 +118,30 @@ class StoryPlayerProvider extends ChangeNotifier {
     notifyListeners();
 
     // 1. Record analytics
-    _analyticsService.logChoiceSelected(
-      storyId: _story!.id,
-      nodeId: _currentNode!.nodeId,
-      choiceId: choice.id,
-      choiceLabel: choice.label,
-      sceneNumber: _currentNode!.sceneNumber,
-    );
+    if (!_isPreview) {
+      _analyticsService.logChoiceSelected(
+        storyId: _story!.id,
+        nodeId: _currentNode!.nodeId,
+        choiceId: choice.id,
+        choiceLabel: choice.label,
+        sceneNumber: _currentNode!.sceneNumber,
+      );
 
-    // 2. Record choice locally without per-choice Firestore writes
-    final userChoice = UserChoiceModel(
-      id: _uuid.v4(),
-      userId: userId,
-      storyId: _story!.id,
-      nodeId: _currentNode!.nodeId,
-      choiceId: choice.id,
-      choiceLabel: choice.label,
-      chosenAt: DateTime.now(),
-    );
-    await _storyRepository.recordUserChoice(userChoice);
+      // 2. Record choice locally without per-choice Firestore writes
+      final userChoice = UserChoiceModel(
+        id: _uuid.v4(),
+        userId: userId,
+        storyId: _story!.id,
+        nodeId: _currentNode!.nodeId,
+        choiceId: choice.id,
+        choiceLabel: choice.label,
+        chosenAt: DateTime.now(),
+      );
+      await _storyRepository.recordUserChoice(userChoice);
+    }
 
     // Brief tension pause for cinematic transition effect
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 300));
 
     // 3. Branching logic: Check if choice directly triggers an ending
     if (choice.leadsToEnding) {
@@ -175,38 +183,40 @@ class StoryPlayerProvider extends ChangeNotifier {
     _currentEnding = ending;
     _status = PlayerStatus.ended;
 
-    // Persist completed play session with full choice history to Firestore and unlock ending locally
-    await _storyRepository.recordStoryPlay(
-      StoryPlayModel(
-        id: _sessionId,
-        storyId: _story!.id,
-        userId: userId,
-        nodesVisited: List.from(_visitedNodeIds),
-        choiceIds: _chosenChoices.map((c) => c.id).toList(),
-        endingId: endingId,
-        isCompleted: true,
-        startedAt: DateTime.now().subtract(const Duration(minutes: 5)),
-        completedAt: DateTime.now(),
-      ),
-    );
-
-    _unlockedEndingIds = _storyRepository.getUnlockedEndingIds(_story!.id);
-
-    // Track completion & ending unlocked
-    _analyticsService.logStoryCompleted(
-      storyId: _story!.id,
-      endingId: endingId,
-      choicesCount: _chosenChoices.length,
-    );
-
-    if (ending != null) {
-      _analyticsService.logEndingUnlocked(
-        storyId: _story!.id,
-        endingId: ending.id,
-        endingTitle: ending.title,
-        rarity: ending.rarity,
-        isSecret: ending.isSecret,
+    if (!_isPreview) {
+      // Persist completed play session with full choice history to Firestore and unlock ending locally
+      await _storyRepository.recordStoryPlay(
+        StoryPlayModel(
+          id: _sessionId,
+          storyId: _story!.id,
+          userId: userId,
+          nodesVisited: List.from(_visitedNodeIds),
+          choiceIds: _chosenChoices.map((c) => c.id).toList(),
+          endingId: endingId,
+          isCompleted: true,
+          startedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+          completedAt: DateTime.now(),
+        ),
       );
+
+      _unlockedEndingIds = _storyRepository.getUnlockedEndingIds(_story!.id);
+
+      // Track completion & ending unlocked
+      _analyticsService.logStoryCompleted(
+        storyId: _story!.id,
+        endingId: endingId,
+        choicesCount: _chosenChoices.length,
+      );
+
+      if (ending != null) {
+        _analyticsService.logEndingUnlocked(
+          storyId: _story!.id,
+          endingId: ending.id,
+          endingTitle: ending.title,
+          rarity: ending.rarity,
+          isSecret: ending.isSecret,
+        );
+      }
     }
 
     notifyListeners();
@@ -214,8 +224,10 @@ class StoryPlayerProvider extends ChangeNotifier {
 
   Future<void> replayCurrentStory(String userId) async {
     if (_story == null) return;
-    _analyticsService.logStoryReplay(storyId: _story!.id);
-    await startStory(story: _story!, userId: userId);
+    if (!_isPreview) {
+      _analyticsService.logStoryReplay(storyId: _story!.id);
+    }
+    await startStory(story: _story!, userId: userId, isPreview: _isPreview);
   }
 
   Future<void> refreshEndings() async {

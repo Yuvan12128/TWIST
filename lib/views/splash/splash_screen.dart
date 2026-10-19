@@ -136,6 +136,18 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Brand Logo Emblem
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 104,
+                          height: 104,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
                       // Brand Title: Bold Yellow TWIST
                       FittedBox(
                         fit: BoxFit.scaleDown,

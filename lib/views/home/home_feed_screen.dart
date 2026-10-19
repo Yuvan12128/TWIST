@@ -9,6 +9,7 @@ import '../../providers/story_feed_provider.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/twist_app_bar.dart';
 import '../story_detail/story_detail_screen.dart';
+import '../chat/chats_screen.dart';
 import 'widgets/story_card.dart';
 
 class HomeFeedScreen extends StatefulWidget {
@@ -62,6 +63,11 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
       appBar: TwistAppBar(
         onSearchTap: widget.onSearchTap,
         onNotificationTap: widget.onNotificationTap,
+        onChatTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ChatsScreen()),
+          );
+        },
       ),
       body: RefreshIndicator(
         color: AppColors.primaryYellow,

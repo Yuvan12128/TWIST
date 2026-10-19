@@ -167,9 +167,13 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                          comment.userName,
-                                          style: AppTypography.storyCardTitle.copyWith(fontSize: 13.5),
+                                        Flexible(
+                                          child: Text(
+                                            comment.userName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.storyCardTitle.copyWith(fontSize: 13.5),
+                                          ),
                                         ),
                                         const SizedBox(width: 8),
                                         Text(

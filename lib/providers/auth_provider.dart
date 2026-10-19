@@ -41,10 +41,16 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      _user = await _authRepository.signInWithGoogle();
+      final user = await _authRepository.signInWithGoogle();
+      if (user == null) {
+        // User cancelled Google account picker - not an error
+        _errorMessage = null;
+        return false;
+      }
+      _user = user;
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
       return false;
     } finally {
       _isLoading = false;

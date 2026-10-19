@@ -5,6 +5,8 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/language_provider.dart';
 import '../../models/story_model.dart';
 import '../../models/story_ending_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/story_player_provider.dart';
 import '../../widgets/cached_image.dart';
 import '../../widgets/twist_button.dart';
 import 'all_endings_screen.dart';
@@ -14,12 +16,14 @@ class EndingScreen extends StatelessWidget {
   final StoryModel story;
   final StoryEndingModel ending;
   final int choicesCount;
+  final bool isPreview;
 
   const EndingScreen({
     super.key,
     required this.story,
     required this.ending,
     required this.choicesCount,
+    this.isPreview = false,
   });
 
   void _tryOtherEndings(BuildContext context) {
@@ -155,37 +159,61 @@ class EndingScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // Buttons Matching Reference Panel 6:
-              // 1. Primary Action: Try Other Endings (Bright Yellow)
-              TwistButton(
-                width: double.infinity,
-                height: 52,
-                text: 'Try Other Endings',
-                icon: const Icon(Icons.refresh_rounded, color: Color(0xFF0B0B0F), size: 22),
-                variant: TwistButtonVariant.primaryGradient,
-                textStyle: AppTypography.buttonText.copyWith(
-                  color: const Color(0xFF0B0B0F),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              // Buttons:
+              if (isPreview) ...[
+                TwistButton(
+                  width: double.infinity,
+                  height: 52,
+                  text: 'Back to Story Editor',
+                  icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0B0B0F), size: 22),
+                  variant: TwistButtonVariant.primaryGradient,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-                onPressed: () => _tryOtherEndings(context),
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
+                TwistButton(
+                  width: double.infinity,
+                  height: 50,
+                  text: 'Replay Story Preview',
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+                  variant: TwistButtonVariant.glass,
+                  onPressed: () {
+                    final userId = context.read<AuthProvider>().user?.uid ?? 'guest';
+                    context.read<StoryPlayerProvider>().replayCurrentStory(userId);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ] else ...[
+                // 1. Primary Action: Try Other Endings (Bright Yellow)
+                TwistButton(
+                  width: double.infinity,
+                  height: 52,
+                  text: 'Try Other Endings',
+                  icon: const Icon(Icons.refresh_rounded, color: Color(0xFF0B0B0F), size: 22),
+                  variant: TwistButtonVariant.primaryGradient,
+                  textStyle: AppTypography.buttonText.copyWith(
+                    color: const Color(0xFF0B0B0F),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  onPressed: () => _tryOtherEndings(context),
+                ),
+                const SizedBox(height: 14),
 
-              // 2. Secondary Action: Share Ending (Dark Card)
-              TwistButton(
-                width: double.infinity,
-                height: 50,
-                text: 'Share Ending',
-                icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
-                variant: TwistButtonVariant.glass,
-                textStyle: AppTypography.buttonText.copyWith(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                // 2. Secondary Action: Share Ending (Dark Card)
+                TwistButton(
+                  width: double.infinity,
+                  height: 50,
+                  text: 'Share Ending',
+                  icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
+                  variant: TwistButtonVariant.glass,
+                  textStyle: AppTypography.buttonText.copyWith(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  onPressed: () => _shareEnding(context),
                 ),
-                onPressed: () => _shareEnding(context),
-              ),
+              ],
               const SizedBox(height: 24),
             ],
           ),

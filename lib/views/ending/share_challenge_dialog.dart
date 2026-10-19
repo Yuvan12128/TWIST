@@ -29,21 +29,27 @@ class ShareChallengeDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
-        padding: const EdgeInsets.all(22.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  context.tr('share_ending_title'),
-                  style: AppTypography.screenTitle.copyWith(fontSize: 18),
+                Expanded(
+                  child: Text(
+                    context.tr('share_ending_title'),
+                    style: AppTypography.screenTitle.copyWith(fontSize: 18),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
@@ -131,8 +137,10 @@ class ShareChallengeDialog extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Share Buttons: WhatsApp, Instagram, Copy Link, Native Share
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              alignment: WrapAlignment.spaceEvenly,
+              spacing: 8,
+              runSpacing: 12,
               children: [
                 _buildSocialIcon(
                   label: 'WhatsApp',
@@ -233,7 +241,8 @@ class ShareChallengeDialog extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSocialIcon({
@@ -244,6 +253,7 @@ class ShareChallengeDialog extends StatelessWidget {
   }) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -258,9 +268,15 @@ class ShareChallengeDialog extends StatelessWidget {
             child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(height: 6),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(fontSize: 11, color: AppColors.textSecondary),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 58),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: AppTypography.caption.copyWith(fontSize: 11, color: AppColors.textSecondary),
+            ),
           ),
         ],
       ),

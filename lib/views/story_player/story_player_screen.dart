@@ -17,11 +17,13 @@ import 'widgets/choice_button.dart';
 class StoryPlayerScreen extends StatefulWidget {
   final StoryModel story;
   final String? startNodeId;
+  final bool isPreview;
 
   const StoryPlayerScreen({
     super.key,
     required this.story,
     this.startNodeId,
+    this.isPreview = false,
   });
 
   @override
@@ -40,6 +42,7 @@ class _StoryPlayerScreenState extends State<StoryPlayerScreen> {
             story: widget.story,
             userId: userId,
             startNodeId: widget.startNodeId,
+            isPreview: widget.isPreview,
           );
     });
   }
@@ -96,6 +99,7 @@ class _StoryPlayerScreenState extends State<StoryPlayerScreen> {
               story: widget.story,
               ending: playerProv.currentEnding!,
               choicesCount: playerProv.choicesCount,
+              isPreview: widget.isPreview,
             ),
             transitionsBuilder: (ctx, animation, secAnim, child) {
               return FadeTransition(opacity: animation, child: child);
@@ -143,10 +147,39 @@ class _StoryPlayerScreenState extends State<StoryPlayerScreen> {
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.more_horiz, color: Colors.white),
-              onPressed: () {},
-            ),
+            if (widget.isPreview)
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(right: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryYellow.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.primaryYellow, width: 1),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.visibility_rounded, size: 12, color: AppColors.primaryYellow),
+                      SizedBox(width: 4),
+                      Text(
+                        'PREVIEW',
+                        style: TextStyle(
+                          color: AppColors.primaryYellow,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.more_horiz, color: Colors.white),
+                onPressed: () {},
+              ),
           ],
         ),
         body: playerProv.isLoading

@@ -7,6 +7,7 @@ class ActivityModel {
   final String? storyId;
   final String? storyTitle;
   final String? targetEndingId;
+  final String? actorId;
   final bool isRead;
   final DateTime createdAt;
 
@@ -16,6 +17,7 @@ class ActivityModel {
     required this.title,
     required this.subtitle,
     this.avatarUrl,
+    this.actorId,
     this.storyId,
     this.storyTitle,
     this.targetEndingId,
@@ -25,6 +27,7 @@ class ActivityModel {
 
   ActivityModel copyWith({
     bool? isRead,
+    String? actorId,
   }) {
     return ActivityModel(
       id: id,
@@ -32,6 +35,7 @@ class ActivityModel {
       title: title,
       subtitle: subtitle,
       avatarUrl: avatarUrl,
+      actorId: actorId ?? this.actorId,
       storyId: storyId,
       storyTitle: storyTitle,
       targetEndingId: targetEndingId,
@@ -47,6 +51,7 @@ class ActivityModel {
       'title': title,
       'subtitle': subtitle,
       'avatarUrl': avatarUrl,
+      'actorId': actorId,
       'storyId': storyId,
       'storyTitle': storyTitle,
       'targetEndingId': targetEndingId,
@@ -62,6 +67,7 @@ class ActivityModel {
       title: map['title'] as String? ?? '',
       subtitle: map['subtitle'] as String? ?? '',
       avatarUrl: map['avatarUrl'] as String?,
+      actorId: map['actorId'] as String?,
       storyId: map['storyId'] as String?,
       storyTitle: map['storyTitle'] as String?,
       targetEndingId: map['targetEndingId'] as String?,

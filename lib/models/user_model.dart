@@ -10,6 +10,7 @@ class UserModel {
   final int followersCount;
   final int followingCount;
   final bool isGuest;
+  final bool isVerified;
   final DateTime createdAt;
 
   const UserModel({
@@ -24,10 +25,12 @@ class UserModel {
     this.followersCount = 0,
     this.followingCount = 0,
     this.isGuest = false,
+    this.isVerified = false,
     required this.createdAt,
   });
 
   UserModel copyWith({
+    String? email,
     String? displayName,
     String? photoUrl,
     String? bio,
@@ -37,10 +40,11 @@ class UserModel {
     int? followersCount,
     int? followingCount,
     bool? isGuest,
+    bool? isVerified,
   }) {
     return UserModel(
       uid: uid,
-      email: email,
+      email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
       bio: bio ?? this.bio,
@@ -50,6 +54,7 @@ class UserModel {
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,
       isGuest: isGuest ?? this.isGuest,
+      isVerified: isVerified ?? this.isVerified,
       createdAt: createdAt,
     );
   }
@@ -67,6 +72,7 @@ class UserModel {
       'followersCount': followersCount,
       'followingCount': followingCount,
       'isGuest': isGuest,
+      'isVerified': isVerified,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -84,6 +90,7 @@ class UserModel {
       followersCount: (map['followersCount'] as num?)?.toInt() ?? 0,
       followingCount: (map['followingCount'] as num?)?.toInt() ?? 0,
       isGuest: map['isGuest'] as bool? ?? false,
+      isVerified: map['isVerified'] as bool? ?? false,
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
