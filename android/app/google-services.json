@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "149696555004",
+    "project_id": "twist-5148a",
+    "storage_bucket": "twist-5148a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:149696555004:android:de66eb1280ae6b6940f479",
+        "android_client_info": {
+          "package_name": "com.example.twist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlvceK68wZwGa3IXd-3XK1hpiujpQUWtU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

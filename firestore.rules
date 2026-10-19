@@ -1,0 +1,267 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // Helper Functions
+    // ==========================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isStoryCreator(storyId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/stories/$(storyId)) &&
+        get(/databases/$(database)/documents/stories/$(storyId)).data.creatorId == request.auth.uid;
+    }
+
+    function isStoryPublished(storyId) {
+      return exists(/databases/$(database)/documents/stories/$(storyId)) &&
+        (get(/databases/$(database)/documents/stories/$(storyId)).data.get('isPublished', false) == true ||
+         (get(/databases/$(database)/documents/stories/$(storyId)).data.get('isPublished', true) != false &&
+          get(/databases/$(database)/documents/stories/$(storyId)).data.get('isDraft', false) == false));
+    }
+
+    // ==========================================
+    // 3. Users Collection
+    // ==========================================
+    match /users/{userId} {
+      // Authenticated users can read profile info for community discovery
+      allow read: if isAuthenticated();
+
+      // Only owner can create their profile document
+      // Prevent setting isAdmin or isVerified
+      allow create: if isOwner(userId)
+                    && request.resource.data.uid == userId
+                    && (!request.resource.data.keys().hasAny(['isAdmin', 'isVerified'])
+                        || (request.resource.data.get('isAdmin', false) == false 
+                            && request.resource.data.get('isVerified', false) == false));
+
+      // Only owner can update their profile
+      // Cannot modify uid
+      // Prevent setting or changing isAdmin or isVerified
+      // Prevent users from freely modifying server-controlled counters
+      allow update: if isOwner(userId)
+                    && request.resource.data.uid == resource.data.uid
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'isAdmin',
+                         'isVerified',
+                         'followersCount',
+                         'followingCount'
+                       ]);
+
+      // Client-side user document deletion is strictly disallowed
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 2. Stories Collection
+    // ==========================================
+    match /stories/{storyId} {
+      // Published stories can be read publicly
+      // Draft/private stories can only be read by their creator
+      allow read: if (resource.data.get('isPublished', false) == true)
+                  || (resource.data.get('isPublished', true) != false && resource.data.get('isDraft', false) == false)
+                  || (isAuthenticated() && resource.data.creatorId == request.auth.uid);
+
+      // Only authenticated users can create stories for themselves
+      // Global counters cannot be initialized with arbitrary fake counts
+      allow create: if isAuthenticated()
+                    && request.resource.data.creatorId == request.auth.uid
+                    && (!request.resource.data.keys().hasAny(['plays', 'likes', 'commentsCount'])
+                        || (request.resource.data.get('plays', 0) == 0 
+                            && request.resource.data.get('likes', 0) == 0 
+                            && request.resource.data.get('commentsCount', 0) == 0));
+
+      // Users cannot modify another user's story
+      // Cannot modify creatorId
+      // Prevent clients from directly changing global counters (plays, likes, commentsCount)
+      allow update: if isAuthenticated()
+                    && resource.data.creatorId == request.auth.uid
+                    && request.resource.data.creatorId == resource.data.creatorId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'plays',
+                         'likes',
+                         'commentsCount'
+                       ]);
+
+      // Only the story creator can delete their story
+      allow delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
+
+      // 1. Subcollection: Story Nodes (/stories/{storyId}/nodes/{nodeId})
+      match /nodes/{nodeId} {
+        // Public users can read them only when parent story is published; creator can read drafts
+        allow read: if isStoryPublished(storyId) || isStoryCreator(storyId);
+        // Only story creator can create, update, or delete nodes
+        allow create, update, delete: if isStoryCreator(storyId);
+      }
+    }
+
+    // ==========================================
+    // 1. Top-level Story Nodes Collection (/storyNodes/{nodeId})
+    // ==========================================
+    match /storyNodes/{nodeId} {
+      // Public users can read them only when parent story is published; creator can read drafts
+      allow read: if (resource != null && (isStoryPublished(resource.data.storyId) || isStoryCreator(resource.data.storyId)));
+
+      // Only the story creator can create, update, or delete them
+      allow create: if isAuthenticated() 
+                    && request.resource.data.storyId is string
+                    && isStoryCreator(request.resource.data.storyId);
+      allow update: if isAuthenticated() 
+                    && isStoryCreator(resource.data.storyId)
+                    && request.resource.data.storyId == resource.data.storyId;
+      allow delete: if isAuthenticated() && isStoryCreator(resource.data.storyId);
+    }
+
+    // ==========================================
+    // 1. Story Choices Collection (/storyChoices/{choiceId})
+    // ==========================================
+    match /storyChoices/{choiceId} {
+      // Public users can read choices only when parent story is published; creator can read drafts
+      allow read: if (resource != null && (isStoryPublished(resource.data.storyId) || isStoryCreator(resource.data.storyId)));
+
+      // Only the story creator can create, update, or delete them
+      allow create: if isAuthenticated() 
+                    && request.resource.data.storyId is string
+                    && isStoryCreator(request.resource.data.storyId);
+      allow update: if isAuthenticated() 
+                    && isStoryCreator(resource.data.storyId)
+                    && request.resource.data.storyId == resource.data.storyId;
+      allow delete: if isAuthenticated() && isStoryCreator(resource.data.storyId);
+    }
+
+    // ==========================================
+    // 1. Story Endings Collection (/endings/{endingId})
+    // ==========================================
+    match /endings/{endingId} {
+      // Public users can read endings only when parent story is published; creator can read drafts
+      allow read: if (resource != null && (isStoryPublished(resource.data.storyId) || isStoryCreator(resource.data.storyId)));
+
+      // Only the story creator can create, update, or delete them
+      allow create: if isAuthenticated() 
+                    && request.resource.data.storyId is string
+                    && isStoryCreator(request.resource.data.storyId);
+      allow update: if isAuthenticated() 
+                    && isStoryCreator(resource.data.storyId)
+                    && request.resource.data.storyId == resource.data.storyId;
+      allow delete: if isAuthenticated() && isStoryCreator(resource.data.storyId);
+    }
+
+    // ==========================================
+    // 4. Story Plays (User play sessions) (/storyPlays/{playId})
+    // ==========================================
+    match /storyPlays/{playId} {
+      // Users can access only their own play sessions
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Users can create play sessions only for themselves
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.storyId is string
+                    && request.resource.data.storyId.size() > 0;
+      // userId and storyId cannot be changed after creation
+      allow update: if isAuthenticated() 
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.storyId == resource.data.storyId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId', 'storyId']);
+      // Play records are immutable history
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 5. User Choices (/userChoices/{choiceRecordId})
+    // ==========================================
+    match /userChoices/{choiceRecordId} {
+      // Users can access only their own choice records
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Users can create only their own choice records
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.storyId is string
+                    && request.resource.data.nodeId is string
+                    && request.resource.data.choiceId is string;
+      // Choice history is immutable
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // 6. Likes Collection (/likes/{likeId})
+    // ==========================================
+    match /likes/{likeId} {
+      allow read: if isAuthenticated();
+      // Enforce deterministic like document IDs: {userId}_{storyId}
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.storyId is string
+                    && request.resource.data.storyId.size() > 0
+                    && likeId == request.auth.uid + '_' + request.resource.data.storyId;
+      // Users can delete only their own likes
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Likes are binary states; cannot be updated
+      allow update: if false;
+    }
+
+    // ==========================================
+    // 7. Comments Collection (/comments/{commentId})
+    // ==========================================
+    match /comments/{commentId} {
+      // Public comments reading on stories
+      allow read: if true;
+      // Users can create comments only as themselves, non-empty text, initial likes = 0
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.storyId is string
+                    && request.resource.data.storyId.size() > 0
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && (!request.resource.data.keys().hasAny(['likes']) 
+                        || request.resource.data.likes == 0);
+      // Prevent changing userId, storyId, likes or createdAt on update
+      allow update: if isAuthenticated() 
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.storyId == resource.data.storyId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'userId',
+                         'storyId',
+                         'likes',
+                         'createdAt'
+                       ])
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0;
+      // Users can delete only their own comments
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // ==========================================
+    // 8. Follows Collection (/follows/{followId})
+    // ==========================================
+    match /follows/{followId} {
+      allow read: if isAuthenticated();
+      // Enforce deterministic follow document IDs: {followerId}_{followingId}
+      allow create: if isAuthenticated() 
+                    && request.resource.data.followerId == request.auth.uid
+                    && request.resource.data.followingId is string
+                    && request.resource.data.followingId.size() > 0
+                    && request.resource.data.followingId != request.auth.uid
+                    && followId == request.auth.uid + '_' + request.resource.data.followingId;
+      // Users can delete only their own follower relationships
+      allow delete: if isAuthenticated() && resource.data.followerId == request.auth.uid;
+      // Follows cannot be modified
+      allow update: if false;
+    }
+
+    // ==========================================
+    // Default Deny
+    // ==========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

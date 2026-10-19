@@ -1,0 +1,28 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "twist-5148a",
+          "appId": "1:149696555004:android:de66eb1280ae6b6940f479",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "twist-5148a",
+          "configurations": {
+            "android": "1:149696555004:android:de66eb1280ae6b6940f479",
+            "ios": "1:149696555004:ios:94b7b0b213d5ac3140f479",
+            "macos": "1:149696555004:ios:94b7b0b213d5ac3140f479",
+            "web": "1:149696555004:web:3dbada2ad876789540f479",
+            "windows": "1:149696555004:web:1664fb75e9fad51740f479"
+          }
+        }
+      }
+    }
+  }
+}
